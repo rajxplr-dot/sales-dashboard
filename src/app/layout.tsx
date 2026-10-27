@@ -8,9 +8,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Sales Dashboard | Analytics Overview",
+  title: "Enterprise Compliance Admin Panel | Regulatory Intelligence",
   description:
-    "A modern sales analytics dashboard displaying performance data for 2022, 2023, and 2024.",
+    "Task 3: Production-grade Enterprise Compliance Admin Panel built with Next.js 15, TypeScript, Tailwind CSS, and Recharts. Real-time regulatory surveillance for FINRA and SEC compliance.",
 };
 
 export default function RootLayout({

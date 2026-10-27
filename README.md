@@ -1,35 +1,87 @@
-# Sales Analytics Dashboard (2022 – 2024)
+# Task 3: Enterprise Compliance Admin Panel
 
-A clean, modern, and high-performance sales analytics dashboard built with **Next.js 15**, **TypeScript**, **Tailwind CSS**, and **Recharts**. This project was created as an internship assessment project showcasing atomic component architecture, multi-year sales data visualization, dynamic filtering, chart switching, and responsive design.
+An enterprise-grade regulatory compliance surveillance console and administration panel built with **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS**, and **Recharts**.
 
----
-
-## 🚀 Live Demo & Preview
-
-- **Dashboard Route:** `/dashboard`
-- **Supported Years:** 2022, 2023, 2024
-- **Deploy Target:** Vercel
+This platform was developed as **Task 3: Enterprise Admin Panel** for the Frontend Engineering Platform assessment, showcasing clean component-driven architecture, responsive data tables with pagination and sorting, interactive compliance telemetry charts, granular role-based access control (RBAC), configurable regulatory rule management, and runtime feature flags.
 
 ---
 
-## ✨ Features
+## 🚀 Live Demo & Route Information
 
-- **Executive Overview Cards:** Summary metrics for 2022 Sales, 2023 Sales, 2024 Sales, and Cumulative/Filtered Total Sales with Year-over-Year (YoY) growth percentage badges.
-- **Interactive Multi-Year Filtering:** Filter dataset dynamically by *All Years*, *2022*, *2023*, or *2024*. Summary metrics and chart visualizations update seamlessly.
-- **Chart Type Toggle:** Switch effortlessly between **Bar Chart View** and **Line Chart View** for trend and distribution analysis.
-- **Product Category Revenue Share:** Donut chart breakdown of revenue by product categories (Electronics, Apparel, Home & Kitchen, Beauty & Care, Sports & Outdoors).
-- **Atomic & Reusable Component Architecture:** Modular design with strict separation of data, utilities, and UI components.
-- **Responsive & Accessible UI/UX:** Mobile-first layout, clean typography, rounded card design, crisp contrast, and subtle hover interactions.
+- **Dashboard Route:** `/dashboard` (Root `/` automatically redirects to `/dashboard`)
+- **Framework:** Next.js 15 (React 19, Server & Client Components)
+- **Deployment Target:** Vercel
 
 ---
 
-## 🛠️ Tech Stack
+## 📋 Core Features Implemented
 
-- **Framework:** [Next.js 15](https://nextjs.org/) (App Router)
-- **Language:** [TypeScript](https://www.typescriptlang.org/)
-- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
-- **Charts Library:** [Recharts](https://recharts.org/)
-- **Icons & Fonts:** Inter (via `next/font/google`), Inline SVGs
+### 1. Executive Metrics Cards
+- **Total Documents Reviewed:** 148,920 documents (+14.2% MoM growth) with 100% surveillance coverage.
+- **Compliance Violations Flagged:** 1,428 violations (-8.6% favorable violation decrease).
+- **Regulatory Pass Rate:** 99.04% (+0.42% above the internal risk benchmark).
+- **Average Review Time:** 1.42s (-0.38s latency improvement per document).
+
+### 2. Interactive Compliance Telemetry Charts (Recharts)
+- **Review Trend Trajectory:** Area and Bar chart views comparing compliant filings against flagged violations over time, with metric filtering (*All Documents* vs *Violations Only*).
+- **Rule Violation Distribution:** Donut and Horizontal Bar views breaking down violations across regulatory policies (`FINRA-2210`, `SEC-17a-4`, `DISC-09`, `GDPR-ART-32`, `AML-KYC-04`) with color-coded severity tiers.
+
+### 3. Searchable User Management Table & RBAC Modal
+- **Real-time Filter & Search:** Instant keyword search across user names, emails, roles, and departments.
+- **Status Badges:** Strict visual states for `Active` (emerald), `Pending` (amber), and `Suspended` (rose).
+- **Sorting & Pagination:** Configurable 5 or 10 users per page, next/previous and direct page jumping, with two-way column sorting (Name, Role, Department, Status, Documents Reviewed, Last Active).
+- **Role & Permission Modal:** Accessible dialog (keyboard `ESC` dismiss, backdrop click) allowing administrators to modify governance roles (`System Administrator`, `Compliance Officer`, `Senior Auditor`, `Risk Analyst`, `Junior Reviewer`) and toggle granular permissions:
+  - `Manage Compliance Rules`
+  - `Approve Violation Overrides`
+  - `View Unmasked Presidio PII`
+  - `Export Regulatory Audit Logs`
+  - `Toggle Feature Flags`
+
+### 4. Compliance Rule Manager
+- **Configured Rules:**
+  - `FINRA-2210`: Communications with the Public & Promissory Claims (Semantic ML).
+  - `SEC-17a-4`: Electronic Books & Records Preservation (WORM compliance, Hybrid LLM).
+  - `DISC-09`: Mandatory Risk & Conflict of Interest Disclosures (Deterministic Regex).
+  - `GDPR-ART-32`: Security of Processing & PII De-identification.
+  - `AML-KYC-04`: High-Risk Jurisdiction & OFAC Sanctioned Entity Filter.
+- **Severity Editing:** Inline dropdown selector for `Critical`, `High`, `Medium`, and `Low` with dynamic color styling.
+- **Active / Inactive Enforcement Toggles:** Accessible toggle switches with immediate local state updates, active rule counts, and toast notifications.
+
+### 5. System Health Indicators & Activity Log
+- **System Telemetry:**
+  - **API Latency:** 38ms (p95: 64ms) — Optimal (&lt; 100ms SLA).
+  - **Database Status:** Connected (Primary PostgreSQL HA Multi-AZ cluster, 99.99% uptime, 0ms replication lag).
+  - **Pipeline Error Rate:** 0.012% (&lt; 0.05% SLA threshold) with 1,450 rps throughput.
+- **Filterable Mock Activity Stream:**
+  - Search by message, actor, or trace ID.
+  - Filter by Subsystem (`RuleEngine`, `PresidioMasker`, `Auth`, `Database`, `IngestionAPI`, `AuditTrail`).
+  - Filter by Level (`Info`, `Warning`, `Error`, `Success`).
+  - **Interactive Simulator:** "+ Simulate Event" button that generates real-time telemetry log entries.
+
+### 6. Feature Flag Switches
+- **AI Substring Validation:** Contextual semantic checks on flagged phrases using fine-tuned embeddings.
+- **Presidio PII Masking:** Automated Microsoft Presidio scrubbing of SSN, IBAN, bank credentials, and customer contact data.
+- **Precedent Lookup:** Vector similarity search against 12,000+ historical FINRA/SEC enforcement actions.
+- **Visible Pipeline Impact:** Real-time state indicators reflecting pipeline latency, PII scrubbing security level, and precedent DB connectivity.
+- **Toast Notifications:** Dynamic feedback confirming state changes whenever a flag is toggled.
+
+---
+
+## 🛡️ Mock Data & Simulated State Disclosure
+
+> **Honesty & Transparency Note:**
+> This application operates entirely on **functional local state and realistic synthetic mock data**. It does not connect to live production databases, SEC Edgar, or external FINRA APIs. All compliance rules, user profiles, telemetry logs, and metrics are modeled after real-world financial services compliance architecture for demonstration and assessment purposes.
+
+---
+
+## 🛠️ Tech Stack & Architecture
+
+- **Framework:** Next.js 15.1.0 (React 19)
+- **Language:** TypeScript 5.7 (Strict mode enabled)
+- **Styling:** Tailwind CSS 3.4 + PostCSS + Autoprefixer
+- **Visualizations:** Recharts 2.15
+- **Icons:** Zero-dependency inline accessible SVGs
+- **Typography:** Inter (via `next/font/google`)
 
 ---
 
@@ -40,116 +92,101 @@ sales-dashboard/
 ├── src/
 │   ├── app/
 │   │   ├── dashboard/
-│   │   │   └── page.tsx         # Main Dashboard route (/dashboard)
-│   │   ├── globals.css          # Global CSS & Tailwind directives
-│   │   ├── layout.tsx           # Root layout with Inter font & metadata
-│   │   └── page.tsx             # Root page (redirects to /dashboard)
+│   │   │   └── page.tsx               # Master Enterprise Admin Panel route
+│   │   ├── globals.css                # Tailwind directives & CSS variables
+│   │   ├── layout.tsx                 # Root layout with Inter font & metadata
+│   │   └── page.tsx                   # Root redirect to /dashboard
 │   ├── components/
-│   │   ├── CategoryChart.tsx    # Category breakdown donut chart
-│   │   ├── ChartTypeSwitch.tsx  # Toggle component for Bar/Line views
-│   │   ├── DashboardHeader.tsx  # Header with title, badge & description
-│   │   ├── SalesBarChart.tsx    # Reusable Recharts Bar Chart
-│   │   ├── SalesLineChart.tsx   # Reusable Recharts Line Chart
-│   │   ├── SummaryCard.tsx      # Reusable KPI summary card with growth badges
-│   │   └── YearFilter.tsx       # Filter tabs (All, 2022, 2023, 2024)
+│   │   ├── icons.tsx                  # Accessible SVG icon primitives
+│   │   ├── DashboardHeader.tsx        # Top enterprise header with navigation tabs
+│   │   ├── SummaryCard.tsx            # Executive KPI card with sentiments & trends
+│   │   ├── ReviewTrendChart.tsx       # Recharts Area/Bar review trend chart
+│   │   ├── ViolationDistributionChart.tsx # Recharts Donut/Bar rule distribution chart
+│   │   ├── UserManagementTable.tsx    # Searchable, sortable, paginated user table
+│   │   ├── UserEditModal.tsx          # Accessible role & permission editor modal
+│   │   ├── ComplianceRuleManager.tsx  # FINRA/SEC rule manager with severity editor
+│   │   ├── SystemHealthMonitor.tsx    # Telemetry indicators & filterable activity log
+│   │   ├── FeatureFlagsManager.tsx    # Feature flag toggles with pipeline impact
+│   │   └── ToastNotification.tsx      # Feedback toast notifications
 │   ├── data/
-│   │   └── sales.ts             # Sales data store & helper functions
+│   │   └── mockComplianceData.ts      # Strictly typed enterprise compliance mock data
 │   └── lib/
-│       └── utils.ts             # Formatting & mathematical helper utilities
-├── public/                      # Static assets
-├── next.config.js               # Next.js configuration
-├── tailwind.config.js           # Tailwind CSS configuration
-├── postcss.config.js            # PostCSS configuration
-├── tsconfig.json                # TypeScript configuration
-└── package.json                 # Project dependencies & scripts
+│       └── utils.ts                   # Formatting helpers (numbers, latency, duration, percentages)
+├── public/                            # Static assets
+├── next.config.js                     # Next.js configuration
+├── tailwind.config.js                 # Tailwind CSS configuration
+├── tsconfig.json                      # Strict TypeScript configuration
+└── package.json                       # Project dependencies
 ```
 
 ---
 
-## 📊 Data Source Disclosure
+## 💻 Local Development Setup
 
-> **Honesty & Transparency Note:**
-> This dashboard uses a clearly documented synthetic dataset structured specifically for multi-year enterprise e-commerce analytics. It reflects realistic retail sales patterns, including Q4 holiday peaks (November–December seasonality), steady Year-over-Year revenue expansion from 2022 to 2024, and product category distribution.
+### 1. Prerequisites
+- **Node.js:** v18.17.0+ or v20+
+- **npm:** v9.0.0+
 
----
+### 2. Installation
+```bash
+# Clone the repository
+git clone https://github.com/your-username/sales-dashboard.git
+cd sales-dashboard
 
-## 💻 Getting Started Locally
+# Install dependencies
+npm install
+```
 
-### Prerequisites
+### 3. Run Development Server
+```bash
+npm run dev
+```
 
-- **Node.js**: `v18.17.0` or higher
-- **npm**: `v9.0.0` or higher
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/sales-dashboard.git
-   cd sales-dashboard
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
-
-4. Open your browser and navigate to:
-   ```
-   http://localhost:3000/dashboard
-   ```
+Open [http://localhost:3000](http://localhost:3000) (or `http://localhost:3000/dashboard`) in your browser.
 
 ---
 
 ## 🏗️ Production Build & Verification
 
-To verify that the application compiles without TypeScript or build errors:
+To verify that the application compiles without any TypeScript, ESLint, or bundle errors:
 
 ```bash
 npm run build
 ```
 
-To run the production build locally:
+To run the optimized production build locally:
 
 ```bash
-npm start
+npm run start
 ```
 
 ---
 
-## 🚀 Deployment to Vercel
+## 🚀 How to Update GitHub & Deploy to Vercel
 
-### Option 1: Via Vercel Web Dashboard (Recommended)
-
-1. Push your repository to GitHub.
-2. Go to [Vercel Dashboard](https://vercel.com/new).
-3. Import your `sales-dashboard` repository.
-4. Keep the framework preset as **Next.js**.
-5. Click **Deploy**.
-
-### Option 2: Via Vercel CLI
+### Step 1: Commit and Push Changes to GitHub
+Run the following commands in the project directory:
 
 ```bash
-npm i -g vercel
-vercel login
-vercel
+# Check modified and newly added files
+git status
+
+# Stage all files
+git add .
+
+# Create a clear commit message
+git commit -m "feat: transform into Task 3 Enterprise Compliance Admin Panel with full mock state"
+
+# Push to your main branch
+git push origin main
 ```
 
----
-
-## 🔮 Future Improvements
-
-- [ ] Add CSV/PDF export capability for executive reporting.
-- [ ] Connect to live REST/GraphQL APIs or PostgreSQL/BigQuery databases.
-- [ ] Add dark mode toggle support.
-- [ ] Add region/country geographic filter dropdown.
-
----
-
-## 📄 License
-
-MIT License - free to use for assessment and learning purposes.
+### Step 2: Redeploy on Vercel
+1. Log into your [Vercel Dashboard](https://vercel.com).
+2. If the project is already linked to your GitHub repository, Vercel will **automatically trigger a new deployment** upon receiving the `git push`.
+3. If setting up a new Vercel project:
+   - Click **Add New** → **Project**.
+   - Select your GitHub repository.
+   - Vercel automatically detects Next.js with default build settings (`npm run build`, output `.next`).
+   - Click **Deploy**.
+4. Once deployed, verify that `/dashboard` renders cleanly with all tabs, charts, and interactive controls functioning.

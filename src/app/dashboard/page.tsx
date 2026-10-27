@@ -1,179 +1,362 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { DashboardHeader } from '@/components/DashboardHeader';
+import React, { useState, useCallback } from 'react';
+import { DashboardHeader, DashboardTab } from '@/components/DashboardHeader';
 import { SummaryCard } from '@/components/SummaryCard';
-import { YearFilter, YearFilterOption } from '@/components/YearFilter';
-import { ChartTypeSwitch, ChartType } from '@/components/ChartTypeSwitch';
-import { SalesBarChart } from '@/components/SalesBarChart';
-import { SalesLineChart } from '@/components/SalesLineChart';
-import { CategoryChart } from '@/components/CategoryChart';
-import { getYearTotals, getFilteredSalesData } from '@/data/sales';
-import { formatCurrency } from '@/lib/utils';
+import { ReviewTrendChart } from '@/components/ReviewTrendChart';
+import { ViolationDistributionChart } from '@/components/ViolationDistributionChart';
+import { UserManagementTable } from '@/components/UserManagementTable';
+import { ComplianceRuleManager } from '@/components/ComplianceRuleManager';
+import { SystemHealthMonitor } from '@/components/SystemHealthMonitor';
+import { FeatureFlagsManager } from '@/components/FeatureFlagsManager';
+import { ToastNotification, ToastMessage } from '@/components/ToastNotification';
+import {
+  FileCheckIcon,
+  ShieldAlertIcon,
+  CheckBadgeIcon,
+  ClockFastIcon,
+} from '@/components/icons';
+import {
+  INITIAL_METRICS,
+  INITIAL_REVIEW_TRENDS,
+  INITIAL_RULE_VIOLATIONS,
+  INITIAL_USERS,
+  INITIAL_COMPLIANCE_RULES,
+  INITIAL_SYSTEM_HEALTH,
+  INITIAL_ACTIVITY_LOGS,
+  INITIAL_FEATURE_FLAGS,
+  EnterpriseUser,
+  RuleSeverity,
+  ActivityLogEntry,
+} from '@/data/mockComplianceData';
+import { formatNumber, formatDuration } from '@/lib/utils';
 
 export default function DashboardPage() {
-  const [selectedYear, setSelectedYear] = useState<YearFilterOption>('All');
-  const [chartType, setChartType] = useState<ChartType>('bar');
+  const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
 
-  const {
-    total2022,
-    total2023,
-    total2024,
-    overallTotal,
-    growth2023,
-    growth2024,
-  } = useMemo(() => getYearTotals(), []);
+  // Local state for interactive features
+  const [metrics, setMetrics] = useState(INITIAL_METRICS);
+  const [reviewTrends, setReviewTrends] = useState(INITIAL_REVIEW_TRENDS);
+  const [ruleViolations, setRuleViolations] = useState(INITIAL_RULE_VIOLATIONS);
+  const [users, setUsers] = useState<EnterpriseUser[]>(INITIAL_USERS);
+  const [rules, setRules] = useState(INITIAL_COMPLIANCE_RULES);
+  const [systemHealth, setSystemHealth] = useState(INITIAL_SYSTEM_HEALTH);
+  const [activityLogs, setActivityLogs] = useState<ActivityLogEntry[]>(INITIAL_ACTIVITY_LOGS);
+  const [featureFlags, setFeatureFlags] = useState(INITIAL_FEATURE_FLAGS);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const filteredData = useMemo(
-    () => getFilteredSalesData(selectedYear),
-    [selectedYear]
+  // Helper to add toast messages
+  const addToast = useCallback((toast: Omit<ToastMessage, 'id'>) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    setToasts((prev) => [...prev, { ...toast, id }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4500);
+  }, []);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // 1. User Management Update
+  const handleUpdateUser = useCallback(
+    (updatedUser: EnterpriseUser) => {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+      );
+      addToast({
+        type: 'success',
+        title: 'Permissions Updated',
+        message: `Successfully modified role and system privileges for ${updatedUser.name}.`,
+      });
+    },
+    [addToast]
   );
 
-  // Dynamic summary calculations based on filter
-  const currentDisplayedTotal = useMemo(() => {
-    if (selectedYear === '2022') return total2022;
-    if (selectedYear === '2023') return total2023;
-    if (selectedYear === '2024') return total2024;
-    return overallTotal;
-  }, [selectedYear, total2022, total2023, total2024, overallTotal]);
+  // 2. Rule Toggling
+  const handleToggleRule = useCallback(
+    (ruleId: string) => {
+      setRules((prev) =>
+        prev.map((r) => {
+          if (r.id === ruleId) {
+            const nextActive = !r.active;
+            addToast({
+              type: nextActive ? 'success' : 'warning',
+              title: `Rule ${r.code} ${nextActive ? 'Enabled' : 'Disabled'}`,
+              message: nextActive
+                ? `${r.title} is now actively enforcing in the surveillance pipeline.`
+                : `${r.title} has been deactivated. Filings will bypass this check.`,
+            });
+            return { ...r, active: nextActive };
+          }
+          return r;
+        })
+      );
+    },
+    [addToast]
+  );
+
+  // 3. Rule Severity Change
+  const handleChangeSeverity = useCallback(
+    (ruleId: string, newSeverity: RuleSeverity) => {
+      setRules((prev) =>
+        prev.map((r) => {
+          if (r.id === ruleId) {
+            addToast({
+              type: 'info',
+              title: `Rule Severity Updated`,
+              message: `Severity tier for ${r.code} changed from ${r.severity} to ${newSeverity}.`,
+            });
+            return { ...r, severity: newSeverity };
+          }
+          return r;
+        })
+      );
+    },
+    [addToast]
+  );
+
+  // 4. Feature Flag Toggle
+  const handleToggleFlag = useCallback(
+    (flagId: string) => {
+      setFeatureFlags((prev) =>
+        prev.map((f) => {
+          if (f.id === flagId) {
+            const nextEnabled = !f.enabled;
+            addToast({
+              type: nextEnabled ? 'success' : 'warning',
+              title: `Feature Flag: ${f.name}`,
+              message: nextEnabled
+                ? `${f.name} activated. Pipeline telemetry latency: ${f.latencyImpact}.`
+                : `${f.name} deactivated. Subsystem bypassed in runtime pipeline.`,
+            });
+            return { ...f, enabled: nextEnabled };
+          }
+          return f;
+        })
+      );
+    },
+    [addToast]
+  );
+
+  // 5. Simulate Real-time Log Event
+  const handleSimulateLogEvent = useCallback(() => {
+    const sampleEvents = [
+      {
+        subsystem: 'RuleEngine' as const,
+        level: 'Warning' as const,
+        actor: 'ML-Surveillance-Worker-4',
+        message: 'Flagged subtle promissory return claim on Pitchbook #PB-49219 under FINRA-2210.',
+        traceId: `trc-finra-${Math.floor(1000 + Math.random() * 9000)}`,
+      },
+      {
+        subsystem: 'PresidioMasker' as const,
+        level: 'Success' as const,
+        actor: 'PresidioService-02',
+        message: 'Scrubbed 4 SSNs and 1 credit card number from trade confirmation audit log.',
+        traceId: `trc-pii-${Math.floor(1000 + Math.random() * 9000)}`,
+      },
+      {
+        subsystem: 'Auth' as const,
+        level: 'Info' as const,
+        actor: 'Elena Rostova',
+        message: 'Authorized regulatory export package #EXP-2026-10-Q3 for SEC external examination.',
+        traceId: `sec-exp-${Math.floor(1000 + Math.random() * 9000)}`,
+      },
+    ];
+
+    const randomEvent = sampleEvents[Math.floor(Math.random() * sampleEvents.length)];
+    const now = new Date();
+    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now
+      .getMinutes()
+      .toString()
+      .padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+
+    const newLog: ActivityLogEntry = {
+      id: `log-${Date.now()}`,
+      timestamp: timeStr,
+      ...randomEvent,
+    };
+
+    setActivityLogs((prev) => [newLog, ...prev]);
+    addToast({
+      type: 'info',
+      title: 'Telemetry Event Captured',
+      message: `New activity log entry received from ${newLog.subsystem}.`,
+    });
+  }, [addToast]);
+
+  // 6. Refresh Telemetry
+  const handleRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setSystemHealth((prev) => ({
+        ...prev,
+        apiLatencyMs: Math.floor(34 + Math.random() * 10),
+        errorRatePercent: parseFloat((0.01 + Math.random() * 0.005).toFixed(3)),
+      }));
+      setIsRefreshing(false);
+      addToast({
+        type: 'success',
+        title: 'Health Telemetry Refreshed',
+        message: 'Surveillance pipeline telemetry synchronized with replica nodes.',
+      });
+    }, 600);
+  }, [addToast]);
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        {/* Dashboard Header */}
-        <DashboardHeader />
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-16">
+      {/* Top Header with Tab Navigation */}
+      <DashboardHeader
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
+      />
 
-        {/* Filters and Controls */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <YearFilter
-            selectedYear={selectedYear}
-            onYearChange={setSelectedYear}
-          />
-          <ChartTypeSwitch
-            chartType={chartType}
-            onChartTypeChange={setChartType}
-          />
-        </div>
+      {/* Main Container */}
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* EXECUTIVE METRICS CARDS (Always visible at top of Overview & accessible) */}
+        <section aria-labelledby="executive-metrics-heading">
+          <h2 id="executive-metrics-heading" className="sr-only">
+            Executive Metrics Overview
+          </h2>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Metric 1: Total Documents Reviewed */}
+            <SummaryCard
+              title="Total Documents Reviewed"
+              value={formatNumber(metrics.totalReviewed)}
+              growth={metrics.totalReviewedGrowth}
+              growthLabel="vs prior 30 days"
+              trendDirection="up"
+              trendSentiment="positive"
+              subtitle="100% filing surveillance coverage"
+              icon={<FileCheckIcon className="h-5 w-5" />}
+            />
 
-        {/* Summary Cards Grid */}
-        <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <SummaryCard
-            title="2022 Total Sales"
-            value={formatCurrency(total2022)}
-            subtitle="Baseline year performance"
-            icon={
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            }
-          />
+            {/* Metric 2: Compliance Violations Flagged */}
+            <SummaryCard
+              title="Compliance Violations Flagged"
+              value={formatNumber(metrics.violationsFlagged)}
+              growth={metrics.violationsFlaggedChange}
+              growthLabel="violation reduction"
+              trendDirection="down"
+              trendSentiment="positive"
+              subtitle="FINRA / SEC flags resolved"
+              icon={<ShieldAlertIcon className="h-5 w-5 text-rose-600" />}
+            />
 
-          <SummaryCard
-            title="2023 Total Sales"
-            value={formatCurrency(total2023)}
-            growth={growth2023}
-            growthLabel="vs 2022"
-            icon={
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            }
-          />
+            {/* Metric 3: Pass Rate */}
+            <SummaryCard
+              title="Regulatory Pass Rate"
+              value={`${metrics.passRate}%`}
+              growth={metrics.passRateChange}
+              growthLabel="vs internal benchmark"
+              trendDirection="up"
+              trendSentiment="positive"
+              subtitle="Industry high adherence"
+              icon={<CheckBadgeIcon className="h-5 w-5 text-emerald-600" />}
+            />
 
-          <SummaryCard
-            title="2024 Total Sales"
-            value={formatCurrency(total2024)}
-            growth={growth2024}
-            growthLabel="vs 2023"
-            icon={
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            }
-          />
+            {/* Metric 4: Average Review Time */}
+            <SummaryCard
+              title="Average Review Time"
+              value={formatDuration(metrics.avgReviewTimeSec)}
+              growth={metrics.avgReviewTimeChangeSec}
+              growthLabel="faster per document"
+              trendDirection="down"
+              trendSentiment="positive"
+              isHighlight={true}
+              subtitle="Sub-second inference target"
+              icon={<ClockFastIcon className="h-5 w-5" />}
+            />
+          </div>
+        </section>
 
-          <SummaryCard
-            title={selectedYear === 'All' ? '3-Year Total Sales' : `${selectedYear} Selected Total`}
-            value={formatCurrency(currentDisplayedTotal)}
-            isHighlight={true}
-            subtitle={selectedYear === 'All' ? 'Cumulative 2022-2024 Revenue' : `Filtered view for ${selectedYear}`}
-            icon={
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            }
-          />
-        </div>
-
-        {/* Main Analytics Grid */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* Main Sales Trend Chart (2 columns wide on desktop) */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div>
-                <h2 className="text-base font-bold text-slate-900">
-                  Sales Performance Trend
-                </h2>
-                <p className="text-xs text-slate-500">
-                  {selectedYear === 'All'
-                    ? 'Comparing monthly trajectory across 2022, 2023, and 2024'
-                    : `Monthly sales revenue breakdown for ${selectedYear}`}
-                </p>
+        {/* TAB 1: EXECUTIVE OVERVIEW */}
+        {activeTab === 'overview' && (
+          <div className="space-y-8 animate-in fade-in duration-200">
+            {/* Charts Section: Review Trends + Violation Distribution */}
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <ReviewTrendChart data={reviewTrends} />
               </div>
-              <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                {chartType === 'bar' ? 'Bar View' : 'Line View'}
-              </span>
+              <div className="lg:col-span-1">
+                <ViolationDistributionChart data={ruleViolations} />
+              </div>
             </div>
 
-            {chartType === 'bar' ? (
-              <SalesBarChart data={filteredData} selectedYear={selectedYear} />
-            ) : (
-              <SalesLineChart data={filteredData} selectedYear={selectedYear} />
-            )}
+            {/* Compliance Quick Rule Snapshot */}
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+              <ComplianceRuleManager
+                rules={rules}
+                onToggleRule={handleToggleRule}
+                onChangeSeverity={handleChangeSeverity}
+              />
+
+              <div className="space-y-6">
+                <FeatureFlagsManager
+                  flags={featureFlags}
+                  onToggleFlag={handleToggleFlag}
+                />
+              </div>
+            </div>
+
+            {/* System Health Quick Telemetry */}
+            <SystemHealthMonitor
+              metrics={systemHealth}
+              logs={activityLogs}
+              onAddSimulatedLog={handleSimulateLogEvent}
+            />
           </div>
+        )}
 
-          {/* Category Revenue Share (1 column on desktop) */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="border-b border-slate-100 pb-4">
-              <h2 className="text-base font-bold text-slate-900">
-                Category Revenue Share
-              </h2>
-              <p className="text-xs text-slate-500">
-                Product distribution for {selectedYear === 'All' ? '2022-2024' : selectedYear}
-              </p>
-            </div>
-
-            <CategoryChart selectedYear={selectedYear} />
+        {/* TAB 2: USER MANAGEMENT TABLE */}
+        {activeTab === 'users' && (
+          <div className="animate-in fade-in duration-200">
+            <UserManagementTable
+              users={users}
+              onUpdateUser={handleUpdateUser}
+            />
           </div>
-        </div>
+        )}
 
-        {/* Key Takeaways & Highlights Section */}
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-            Executive Summary & Insights
-          </h3>
-          <div className="mt-3 grid grid-cols-1 gap-4 text-xs text-slate-600 sm:grid-cols-3">
-            <div className="rounded-lg bg-slate-50 p-3">
-              <span className="font-semibold text-slate-800">Consistent Growth:</span>
-              <p className="mt-1">
-                Sales expanded by {growth2023.toFixed(1)}% in 2023 and accelerated further by {growth2024.toFixed(1)}% in 2024, demonstrating strong market demand.
-              </p>
-            </div>
-            <div className="rounded-lg bg-slate-50 p-3">
-              <span className="font-semibold text-slate-800">Q4 Peak Seasonality:</span>
-              <p className="mt-1">
-                November and December consistently generate the highest monthly volume across all 3 years, driven by Q4 holiday promotions.
-              </p>
-            </div>
-            <div className="rounded-lg bg-slate-50 p-3">
-              <span className="font-semibold text-slate-800">Top Revenue Driver:</span>
-              <p className="mt-1">
-                Electronics remains the primary revenue driver, contributing the largest share of annual income across 2022–2024.
-              </p>
-            </div>
+        {/* TAB 3: COMPLIANCE RULE MANAGER */}
+        {activeTab === 'rules' && (
+          <div className="animate-in fade-in duration-200">
+            <ComplianceRuleManager
+              rules={rules}
+              onToggleRule={handleToggleRule}
+              onChangeSeverity={handleChangeSeverity}
+            />
           </div>
-        </div>
-      </div>
+        )}
+
+        {/* TAB 4: SYSTEM HEALTH & ACTIVITY LOGS */}
+        {activeTab === 'health' && (
+          <div className="animate-in fade-in duration-200">
+            <SystemHealthMonitor
+              metrics={systemHealth}
+              logs={activityLogs}
+              onAddSimulatedLog={handleSimulateLogEvent}
+            />
+          </div>
+        )}
+
+        {/* TAB 5: FEATURE FLAGS */}
+        {activeTab === 'flags' && (
+          <div className="animate-in fade-in duration-200">
+            <FeatureFlagsManager
+              flags={featureFlags}
+              onToggleFlag={handleToggleFlag}
+            />
+          </div>
+        )}
+      </main>
+
+      {/* Floating Toast Notification Container */}
+      <ToastNotification toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }
